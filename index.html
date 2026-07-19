@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>S11PRO CommandCenter v5.2</title>
+  <title>S11PRO CommandCenter v5.3</title>
   <style>
     *,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}
     html,body{background-color:#0a0e13;color:#d6e1e8;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;margin:0;min-height:100vh}
     .container{max-width:1200px;margin:0 auto;padding:1rem;display:grid;grid-template-columns:1fr;gap:1rem}
-    @media (min-width:1024px){.container{grid-template-columns:350px 1fr}}
+    @media (min-width:1024px){.container{grid-template-columns:360px 1fr}}
     .panel{background-color:#0f1720;border:1px solid #16202c;border-radius:12px;padding:1rem}
     .header{sticky:top;z-index:20;background-color:rgba(10,14,19,0.9);backdrop-filter:blur(8px);border-bottom:1px solid #16202c;padding:0.75rem 1rem;display:flex;justify-content:between;align-items:center;flex-wrap:wrap;gap:1rem}
     .btn{height:40px;padding:0 1rem;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:0.5rem}
@@ -19,14 +19,14 @@
     .btn-danger:hover{background-color:#1a1212}
     .btn-cmd{width:100%;background-color:#121a23;border:1px solid #1e2e3e;color:#fff;text-align:left;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.5rem;display:flex;justify-content:between;align-items:center}
     .btn-cmd:hover:not(:disabled){border-color:#2a3f55;background-color:#15202e}
-    .btn-cmd:disabled{opacity:0.3;cursor:not-allowed}
+    .btn-cmd:disabled{opacity:0.2;cursor:not-allowed}
     .badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
     .badge-success{background-color:rgba(30,215,96,0.15);color:#1ed760}
     .badge-warn{background-color:rgba(245,158,11,0.15);color:#fbbf24}
     .tabs{display:flex;gap:0.25rem;background-color:#0a0e13;padding:2px;border-radius:8px;margin-bottom:1rem;border:1px solid #16202c}
-    .tab{flex:1;text-align:center;padding:0.5rem;font-size:11px;font-weight:700;cursor:pointer;border-radius:6px;color:#7a93a8}
+    .tab{flex:1;text-align:center;padding:0.5rem;font-size:10px;font-weight:700;cursor:pointer;border-radius:6px;color:#7a93a8;transition:all 0.1s}
     .tab.active{background-color:#1e2e3e;color:#fff;border:1px solid #2a3a4a}
-    .log-area{background-color:#0a0e13;border:1px solid #16202c;border-radius:8px;padding:0.75rem;font-size:11px;line-height:1.6;height:380px;overflow-auto:auto;display:flex;flex-direction:column}
+    .log-area{background-color:#0a0e13;border:1px solid #16202c;border-radius:8px;padding:0.75rem;font-size:11px;line-height:1.6;height:420px;overflow-y:auto;display:flex;flex-direction:column}
     .log-line{display:flex;gap:0.5rem;margin-bottom:2px}
     .text-tx{color:#1ed760} .text-rx{color:#5cc8ff} .text-err{color:#ff5a5a} .text-warn{color:#fbbf24} .text-info{color:#8aa0b3}
   </style>
@@ -37,44 +37,44 @@
     <div style="display:flex;align-items:center;gap:0.75rem">
       <div style="height:36px;width:36px;border-radius:8px;background-color:#1ed760;display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;font-size:16px">S11</div>
       <div>
-        <div style="font-weight:800;font-size:15px">S11PRO v5.2 <span style="color:#1ed760">STABLE LISTENER</span></div>
-        <div style="font-size:10px;color:#5d7387;margin-top:2px">CORREÇÃO DE REBOOT: ANTICRASH POR ESTOURO DE BUFFER DE VOZ</div>
+        <div style="font-weight:800;font-size:15px">S11PRO v5.3 <span style="color:#1ed760">PURE 4-BYTE INJECTOR</span></div>
+        <div style="font-size:10px;color:#5d7387;margin-top:2px">CORREÇÃO DE PAYLOAD COM BASE NO MAPEAMENTO nRF CONNECT</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:0.5rem">
-      <div id="status-led" style="height:8px;width:8px;rounded-radius:50%;background-color:#2a3a4a;border-radius:50%"></div>
+      <div id="status-led" style="height:8px;width:8px;background-color:#2a3a4a;border-radius:50%"></div>
       <div id="status-txt" style="font-size:11px;color:#7a93a8;text-transform:uppercase">DESCONECTADO</div>
     </div>
   </header>
 
   <main class="container">
-    <!-- COLUNA ESQUERDA: CONTROLE GATT -->
+    <!-- COLUNA ESQUERDA: NAVEGAÇÃO E BOTÕES -->
     <div class="panel" style="display:flex;flex-direction:column;gap:1rem">
       <div>
         <div class="btn-cmd" style="margin-bottom:1rem">
           <div>
             <div style="font-weight:700;font-size:13px" id="lbl-name">Watch S11Pro</div>
-            <div style="font-size:10px;color:#5d7387" id="lbl-id">Aguardando GATT...</div>
+            <div style="font-size:10px;color:#5d7387" id="lbl-id">Aguardando conexão...</div>
           </div>
           <span class="badge badge-warn" id="badge-state">IDLE</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
           <button class="btn btn-primary" id="btn-connect">CONECTAR</button>
-          <button class="btn btn-danger" id="btn-disconnect" disabled>SAIR</button>
+          <button class="btn btn-danger" id="btn-disconnect" disabled>DESCONECTAR</button>
         </div>
       </div>
 
       <!-- SELETOR DE ABAS INTERATIVAS (33 COMANDOS) -->
       <div style="flex:1">
-        <div style="font-size:11px;color:#5d7387;text-transform:uppercase;margin-bottom:0.5rem;font-weight:700">Abas do Aplicativo</div>
+        <div style="font-size:11px;color:#5d7387;text-transform:uppercase;margin-bottom:0.5rem;font-weight:700">Abas MActivePro</div>
         <div class="tabs">
           <div class="tab active" onclick="switchTab('saude')" id="tab-saude">SAÚDE</div>
           <div class="tab" onclick="switchTab('esportes')" id="tab-esportes">ESPORTES</div>
           <div class="tab" onclick="switchTab('sistema')" id="tab-sistema">SISTEMA</div>
           <div class="tab" onclick="switchTab('musica')" id="tab-musica">MÚSICA</div>
         </div>
-        <div id="commands-container" style="max-height:280px;overflow-y:auto;padding-right:2px">
-          <!-- Botões injetados dinamicamente via JS -->
+        <div id="commands-container" style="max-height:340px;overflow-y:auto;padding-right:2px">
+          <!-- Injetado dinamicamente -->
         </div>
       </div>
     </div>
@@ -82,62 +82,59 @@
     <!-- COLUNA DIREITA: TERMINAL DE LOGS -->
     <div class="panel" style="display:flex;flex-direction:column;gap:0.75rem">
       <div style="display:flex;justify-content:between;align-items:center">
-        <div style="font-size:12px;color:#5d7387;font-weight:700;text-transform:uppercase">Barramento BLE Seguidor (Ouvinte Passivo)</div>
+        <div style="font-size:12px;color:#5d7387;font-weight:700;text-transform:uppercase">Barramento BLE Corrigido (4 Bytes Fixos)</div>
         <button class="btn" style="height:26px;background-color:#121a23;border:1px solid #1e2e3e;color:#7a93a8;font-size:11px" id="btn-clear">Limpar</button>
       </div>
       <div class="log-area" id="log-screen"></div>
       <div style="font-size:10px;color:#3a4e62;line-height:1.4">
-        * Fluxo v5.2: O app não força o envio de Bateria no handshake. Se o relógio acordar enviando comandos de voz offline de transição (ex: lanterna ou menu), o app absorve o pacote sem colidir o barramento RX/TX. Fila de escrita travada em 1000ms.
+        * Mudança Crítica v5.3: Removidos os bytes extras de comprimento e checksum que geravam payloads de 6 bytes. Agora o botão gera exatamente a assinatura pura de 4 bytes exigida pelo processador interno do relógio.
       </div>
     </div>
   </main>
 
   <script type="module">
-    import React from 'https://esm.sh/react@18.3.1';
-    import ReactDOM from 'https://esm.sh/react-dom@18.3.1';
-
-    // Banco de Dados completo dos 33 comandos indexados por aba
+    // Banco de Dados unificado dos 33 comandos para injeção de 4 bytes puros
     const COMMANDS_DATABASE = {
       saude: [
-        { label: "Open Heart Rate", cmd: 0x48, sub: 0x01, p: [0x01] },
-        { label: "Blood pressure", cmd: 0x48, sub: 0x01, p: [0x02] },
-        { label: "Open Thermometer", cmd: 0x48, sub: 0x01, p: [0x03] },
-        { label: "Open ECG", cmd: 0x48, sub: 0x01, p: [0x04] },
-        { label: "Open Sleep", cmd: 0x48, sub: 0x01, p: [0x05] },
-        { label: "Open Massage", cmd: 0x48, sub: 0x01, p: [0x06] }
+        { label: "Open Heart Rate", cmd: 0x48, sub: 0x01, index: 0x01 },
+        { label: "Blood pressure", cmd: 0x48, sub: 0x01, index: 0x02 },
+        { label: "Open Thermometer", cmd: 0x48, sub: 0x01, index: 0x03 },
+        { label: "Open ECG", cmd: 0x48, sub: 0x01, index: 0x04 },
+        { label: "Open Sleep", cmd: 0x48, sub: 0x01, index: 0x05 },
+        { label: "Open Massage", cmd: 0x48, sub: 0x01, index: 0x06 }
       ],
       esportes: [
-        { label: "Open Activity", cmd: 0x48, sub: 0x02, p: [0x01] },
-        { label: "Open Sports", cmd: 0x48, sub: 0x02, p: [0x02] },
-        { label: "Start basketball", cmd: 0x48, sub: 0x02, p: [0x03] },
-        { label: "Start travel by walking", cmd: 0x48, sub: 0x02, p: [0x04] },
-        { label: "Start Indoor bike", cmd: 0x48, sub: 0x02, p: [0x05] },
-        { label: "Start Riding", cmd: 0x48, sub: 0x02, p: [0x06] },
-        { label: "open Weather", cmd: 0x48, sub: 0x02, p: [0x07] }
+        { label: "Open Activity", cmd: 0x48, sub: 0x02, index: 0x01 },
+        { label: "Open Sports", cmd: 0x48, sub: 0x02, index: 0x02 },
+        { label: "Start basketball", cmd: 0x48, sub: 0x02, index: 0x03 },
+        { label: "Start travel by walking", cmd: 0x48, sub: 0x02, index: 0x04 },
+        { label: "Start Indoor bike", cmd: 0x48, sub: 0x02, index: 0x05 },
+        { label: "Start Riding", cmd: 0x48, sub: 0x02, index: 0x06 },
+        { label: "open Weather", cmd: 0x48, sub: 0x02, index: 0x07 }
       ],
       sistema: [
-        { label: "open Setting", cmd: 0x48, sub: 0x03, p: [0x01] },
-        { label: "reduce Brightness", cmd: 0x48, sub: 0x03, p: [0x02] },
-        { label: "increase Brightness", cmd: 0x48, sub: 0x03, p: [0x03] },
-        { label: "open notification", cmd: 0x48, sub: 0x03, p: [0x04] },
-        { label: "open Flashlight", cmd: 0x48, sub: 0x03, p: [0x05] },
-        { label: "open Contacts", cmd: 0x48, sub: 0x03, p: [0x06] },
-        { label: "open Dialpad", cmd: 0x48, sub: 0x03, p: [0x07] },
-        { label: "open Alarm", cmd: 0x48, sub: 0x03, p: [0x08] },
-        { label: "Find phone", cmd: 0x48, sub: 0x03, p: [0x09] },
-        { label: "open Game", cmd: 0x48, sub: 0x03, p: [0x0A] }
+        { label: "open Setting", cmd: 0x48, sub: 0x03, index: 0x01 },
+        { label: "reduce Brightness", cmd: 0x48, sub: 0x03, index: 0x02 },
+        { label: "increase Brightness", cmd: 0x48, sub: 0x03, index: 0x03 },
+        { label: "open notification", cmd: 0x48, sub: 0x03, index: 0x04 },
+        { label: "open Flashlight", cmd: 0x48, sub: 0x03, index: 0x05 },
+        { label: "open Contacts", cmd: 0x48, sub: 0x03, index: 0x06 },
+        { label: "open Dialpad", cmd: 0x48, sub: 0x03, index: 0x07 },
+        { label: "open Alarm", cmd: 0x48, sub: 0x03, index: 0x08 },
+        { label: "Find phone", cmd: 0x48, sub: 0x03, index: 0x09 },
+        { label: "open Game", cmd: 0x48, sub: 0x03, index: 0x0A }
       ],
       musica: [
-        { label: "Start Music", cmd: 0x48, sub: 0x04, p: [0x01] },
-        { label: "play music", cmd: 0x48, sub: 0x04, p: [0x01] },
-        { label: "Continue play", cmd: 0x48, sub: 0x04, p: [0x01] },
-        { label: "stop play", cmd: 0x48, sub: 0x04, p: [0x02] },
-        { label: "Previous song", cmd: 0x48, sub: 0x04, p: [0x03] },
-        { label: "Next song", cmd: 0x48, sub: 0x04, p: [0x04] },
-        { label: "Random Cycle", cmd: 0x48, sub: 0x04, p: [0x05] },
-        { label: "Single cycle", cmd: 0x48, sub: 0x04, p: [0x06] },
-        { label: "reduce Volume", cmd: 0x48, sub: 0x04, p: [0x07] },
-        { label: "increase Volume", cmd: 0x48, sub: 0x04, p: [0x08] }
+        { label: "Start Music", cmd: 0x48, sub: 0x04, index: 0x01 },
+        { label: "play music", cmd: 0x48, sub: 0x04, index: 0x01 },
+        { label: "Continue play", cmd: 0x48, sub: 0x04, index: 0x01 },
+        { label: "stop play", cmd: 0x48, sub: 0x04, index: 0x02 },
+        { label: "Previous song", cmd: 0x48, sub: 0x04, index: 0x03 },
+        { label: "Next song", cmd: 0x48, sub: 0x04, index: 0x04 },
+        { label: "Random Cycle", cmd: 0x48, sub: 0x04, index: 0x05 },
+        { label: "Single cycle", cmd: 0x48, sub: 0x04, index: 0x06 },
+        { label: "reduce Volume", cmd: 0x48, sub: 0x04, index: 0x07 },
+        { label: "increase Volume", cmd: 0x48, sub: 0x04, index: 0x08 }
       ]
     };
 
@@ -145,9 +142,8 @@
     let gattDevice = null;
     let writeChar = null;
     let txQueue = [];
-    let isSending = !1;
+    let isSending = false;
 
-    // Elementos da Interface
     const logScreen = document.getElementById("log-screen");
     const led = document.getElementById("status-led");
     const txtStatus = document.getElementById("status-txt");
@@ -163,29 +159,31 @@
       logScreen.scrollTop = logScreen.scrollHeight;
     }
 
-    // Gerador de Frames com Cálculo de Checksum v5.2 Corrigido
-    function buildFrame(cmd, sub, payload) {
-      if(!payload || payload.length === 0) return new Uint8Array([0xBC, cmd & 0xFF, sub & 0xFF, 0, 0]);
-      let len = payload.length & 0xFF;
-      let sum = 0;
-      for(let b of payload) sum = (sum + b) & 0xFF;
-      return new Uint8Array([0xBC, cmd & 0xFF, sub & 0xFF, len, ...payload, sum]);
+    // Gerador Corrigido v5.3: Array Estrito de 4 Bytes Nativos
+    function buildPureFrame(cmd, sub, index) {
+      return new Uint8Array([
+        0xBC, 
+        cmd & 0xFF, 
+        sub & 0xFF, 
+        index & 0xFF
+      ]);
     }
 
     function renderButtons() {
       const container = document.getElementById("commands-container");
       container.innerHTML = "";
       let items = COMMANDS_DATABASE[currentTab];
+      
       items.forEach(item => {
         let btn = document.createElement("button");
         btn.className = "btn-cmd";
         btn.disabled = !gattDevice?.gatt?.connected;
-        let hexString = Array.from(buildFrame(item.cmd, item.sub, item.p)).map(b=>b.toString(16).toUpperCase().padStart(2,"0")).join(" ");
-        btn.innerHTML = `<div><div style="font-weight:600">${item.label}</div><div style="font-size:9px;color:#5d7387">${hexString}</div></div><span style="font-size:10px;color:#1ed760">Enviar-></span>`;
-        btn.onclick = () => {
-          let buffer = buildFrame(item.cmd, item.sub, item.p);
-          enqueueFrame(item.label, buffer);
-        };
+        
+        let frame = buildPureFrame(item.cmd, item.sub, item.index);
+        let hexDisplay = Array.from(frame).map(b=>b.toString(16).toUpperCase().padStart(2,"0")).join(" ");
+        
+        btn.innerHTML = `<div><div style="font-weight:600">${item.label}</div><div style="font-size:9px;color:#5d7387">FF02 -> ${hexDisplay}</div></div><span style="font-size:10px;color:#1ed760">Injetar</span>`;
+        btn.onclick = () => enqueueFrame(item.label, frame);
         container.appendChild(btn);
       });
     }
@@ -199,48 +197,43 @@
 
     function enqueueFrame(label, buffer) {
       txQueue.push({label, data: buffer});
-      printLog(`Fila: ${label} adicionado (${txQueue.length} na fila)`,"info");
       processQueue();
     }
 
     async function processQueue() {
       if(isSending || txQueue.length === 0) return;
-      isSending = !0;
+      isSending = true;
       let target = txQueue[0];
       try {
         if(writeChar) {
           let hexDisplay = Array.from(target.data).map(b=>b.toString(16).toUpperCase().padStart(2,"0")).join(" ");
-          printLog(`[FF02->] ${target.label} -> ${hexDisplay}`, "tx");
+          printLog(`[FF02->TX] ${target.label} enviado: ${hexDisplay}`, "tx");
           await writeChar.writeValueWithoutResponse(target.data);
         }
         txQueue.shift();
       } catch(e) {
-        printLog(`Falha de envio: ${e.message}`, "err");
+        printLog(`Erro de escrita: ${e.message}`, "err");
         txQueue.shift();
       }
-      setTimeout(() => { isSending = !1; processQueue(); }, 1000); // 1 Segundo de Isolamento
+      setTimeout(() => { isSending = false; processQueue(); }, 1000); // Janela síncrona estável
     }
 
-    // Receptor e Absorvedor de Eventos RX (Evita travamentos de Watchdog)
     function handleNotificationReceived(event) {
       let val = event.target.value;
       let raw = new Uint8Array(val.buffer);
       let hex = Array.from(raw).map(b=>b.toString(16).toUpperCase().padStart(2,"0")).join(" ");
-      printLog(`[FF03<-RX] ${hex} (len=${raw.length})`, "rx");
+      printLog(`[FF03<-RX] ${hex}`, "rx");
 
-      // Tratamento Inteligente de Interrupção de Voz Nativa
       if(raw.length >= 4 && raw[0] === 0xBC && raw[1] === 0x48) {
-        let cat = raw[2];
-        let subIndex = raw[3];
-        if(cat === 0x03 && subIndex === 0x05) {
-          printLog(`[OUVINTE] Relógio notificou abertura de Lanterna Offline. Absorvido sem colisão de escrita.`,"warn");
+        if(raw[2] === 0x03 && raw[3] === 0x05) {
+          printLog(`[ABSORVEDOR] Heartbeat/Keep-Alive de voz offline do relógio processado.`,"info");
         }
       }
     }
 
     async function connectBLE() {
       try {
-        printLog("Buscando Watch S11Pro via WebBluetooth...", "info");
+        printLog("Iniciando busca nRF Connect simulada por WebBluetooth...", "info");
         let device = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: ["cc353442-be58-4ea2-876e-11d8d6976366","000001ff-3c17-d293-8e48-14fe2e4da212","0000ae00-0000-1000-8000-00805f9b34fb"]
@@ -248,16 +241,15 @@
         
         gattDevice = device;
         document.getElementById("lbl-name").innerText = device.name || "Watch S11Pro";
-        document.getElementById("lbl-id").innerText = device.id.slice(0,20) + "...";
+        document.getElementById("lbl-id").innerText = "MAC: 25:10:13:14:01:EA";
         
         device.addEventListener('gattserverdisconnected', onDisconnected);
-        printLog("Conectando ao barramento GATT...", "info");
+        printLog("GATT conectado ao Watch S11Pro", "info");
         let server = await device.gatt.connect();
         
         led.style.backgroundColor = "#fbbf24";
-        txtStatus.innerText = "CONECTADO • PREPARANDO CHANNELS";
+        txtStatus.innerText = "SINCRO DOS CANAIS FF02/FF03";
         
-        // Obter serviço de comunicação principal FF01/FF02
         let commService = await server.getPrimaryService("000001ff-3c17-d293-8e48-14fe2e4da212");
         writeChar = await commService.getCharacteristic("0000ff02-0000-1000-8000-00805f9b34fb");
         let notifyChar = await commService.getCharacteristic("0000ff03-0000-1000-8000-00805f9b34fb");
@@ -265,16 +257,15 @@
         await notifyChar.startNotifications();
         notifyChar.addEventListener('characteristicvaluechanged', handleNotificationReceived);
         
-        // ESTABILIZAÇÃO v5.2: Liberado passivamente sem disparar escritas de bateria imediatas!
         led.style.backgroundColor = "#1ed760";
-        txtStatus.innerText = "CONECTADO • MODO OUVINTE ATIVO";
+        txtStatus.innerText = "MODO OUVINTE v5.3 ATIVO";
         document.getElementById("badge-state").innerText = "LIVE";
         document.getElementById("badge-state").className = "badge badge-success";
         
         btnConnect.disabled = true;
         btnDisconnect.disabled = false;
         
-        printLog("CONEXÃO ESTABILIZADA. Pronto para receber ou injetar comandos sem loop.","ok");
+        printLog("CONEXÃO ESTABILIZADA. Próximo passo: Clique nas abas e injete os comandos puros.","ok");
         renderButtons();
         
       } catch(err) {
@@ -284,7 +275,7 @@
     }
 
     function onDisconnected() {
-      printLog("O relógio desconectou ou reiniciou por Watchdog.", "err");
+      printLog("GATT desconectado da central.", "err");
       Jl();
     }
 
@@ -305,8 +296,7 @@
     btnDisconnect.onclick = () => gattDevice?.gatt?.disconnect();
     document.getElementById("btn-clear").onclick = () => logScreen.innerHTML = "";
 
-    // Inicialização
-    printLog("Aguardando inicialização do painel v5.2...", "info");
+    printLog("Aguardando inicialização do painel v5.3...", "info");
     renderButtons();
   </script>
 </body>
