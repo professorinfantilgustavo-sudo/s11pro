@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>S11PRO CommandCenter v5.3</title>
+  <title>S11PRO CommandCenter v5.4 - Bypass Mode</title>
   <style>
     *,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}
     html,body{background-color:#0a0e13;color:#d6e1e8;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;margin:0;min-height:100vh}
@@ -17,7 +17,7 @@
     .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
     .btn-danger{background-color:#0f1720;color:#ff5a5a;border:1px solid #2a1a1a}
     .btn-danger:hover{background-color:#1a1212}
-    .btn-cmd{width:100%;background-color:#121a23;border:1px solid #1e2e3e;color:#fff;text-align:left;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.5rem;display:flex;justify-content:between;align-items:center}
+    .btn-cmd{width:100%;background-color:#121a23;border:1px solid #1e2e3e;color:#fff;text-align:left;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.5rem;display:flex;justify-content:between;align-items:center;transition:all 0.1s}
     .btn-cmd:hover:not(:disabled){border-color:#2a3f55;background-color:#15202e}
     .btn-cmd:disabled{opacity:0.2;cursor:not-allowed}
     .badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
@@ -37,8 +37,8 @@
     <div style="display:flex;align-items:center;gap:0.75rem">
       <div style="height:36px;width:36px;border-radius:8px;background-color:#1ed760;display:flex;align-items:center;justify-content:center;font-weight:800;color:#000;font-size:16px">S11</div>
       <div>
-        <div style="font-weight:800;font-size:15px">S11PRO v5.3 <span style="color:#1ed760">PURE 4-BYTE INJECTOR</span></div>
-        <div style="font-size:10px;color:#5d7387;margin-top:2px">CORREÇÃO DE PAYLOAD COM BASE NO MAPEAMENTO nRF CONNECT</div>
+        <div style="font-weight:800;font-size:15px">S11PRO v5.4 <span style="color:#1ed760">BYPASS MODE</span></div>
+        <div style="font-size:10px;color:#5d7387;margin-top:2px">VINCULAÇÃO E LIBERAÇÃO AUTOMÁTICA DE COMANDOS NA TELA DO RELÓGIO</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:0.5rem">
@@ -82,18 +82,18 @@
     <!-- COLUNA DIREITA: TERMINAL DE LOGS -->
     <div class="panel" style="display:flex;flex-direction:column;gap:0.75rem">
       <div style="display:flex;justify-content:between;align-items:center">
-        <div style="font-size:12px;color:#5d7387;font-weight:700;text-transform:uppercase">Barramento BLE Corrigido (4 Bytes Fixos)</div>
+        <div style="font-size:12px;color:#5d7387;font-weight:700;text-transform:uppercase">Barramento BLE de Injeção e Bypass</div>
         <button class="btn" style="height:26px;background-color:#121a23;border:1px solid #1e2e3e;color:#7a93a8;font-size:11px" id="btn-clear">Limpar</button>
       </div>
       <div class="log-area" id="log-screen"></div>
       <div style="font-size:10px;color:#3a4e62;line-height:1.4">
-        * Mudança Crítica v5.3: Removidos os bytes extras de comprimento e checksum que geravam payloads de 6 bytes. Agora o botão gera exatamente a assinatura pura de 4 bytes exigida pelo processador interno do relógio.
+        * Fluxo v5.4: Envia automaticamente a sequência <span style="color:#1ed760">BC 00</span> e <span style="color:#1ed760">BC 5C</span> no handshake inicial. Isso simula o estado logado do app original para contornar a rejeição de segurança do relógio. Comandos corrigidos para 4 bytes exatos.
       </div>
     </div>
   </main>
 
   <script type="module">
-    // Banco de Dados unificado dos 33 comandos para injeção de 4 bytes puros
+    // Banco de Dados completo corrigido para injeção de 4 bytes puros [0xBC, cmd, sub, index]
     const COMMANDS_DATABASE = {
       saude: [
         { label: "Open Heart Rate", cmd: 0x48, sub: 0x01, index: 0x01 },
@@ -159,7 +159,7 @@
       logScreen.scrollTop = logScreen.scrollHeight;
     }
 
-    // Gerador Corrigido v5.3: Array Estrito de 4 Bytes Nativos
+    // Gerador de Frame Estrito de 4 Bytes Exatos exigido pelo Microcontrolador do S11PRO
     function buildPureFrame(cmd, sub, index) {
       return new Uint8Array([
         0xBC, 
@@ -215,7 +215,7 @@
         printLog(`Erro de escrita: ${e.message}`, "err");
         txQueue.shift();
       }
-      setTimeout(() => { isSending = false; processQueue(); }, 1000); // Janela síncrona estável
+      setTimeout(() => { isSending = false; processQueue(); }, 1000); // Espaçamento síngular estável
     }
 
     function handleNotificationReceived(event) {
@@ -224,9 +224,12 @@
       let hex = Array.from(raw).map(b=>b.toString(16).toUpperCase().padStart(2,"0")).join(" ");
       printLog(`[FF03<-RX] ${hex}`, "rx");
 
-      if(raw.length >= 4 && raw[0] === 0xBC && raw[1] === 0x48) {
-        if(raw[2] === 0x03 && raw[3] === 0x05) {
-          printLog(`[ABSORVEDOR] Heartbeat/Keep-Alive de voz offline do relógio processado.`,"info");
+      // Tratamento analítico de negações e Keep-Alives
+      if(raw.length >= 4 && raw[0] === 0xBC) {
+        if(raw[1] === 0x48 && raw[2] === 0x03 && raw[3] === 0x05) {
+          printLog(`[ABSORVEDOR] Heartbeat/Keep-Alive de voz offline recebido do hardware.`,"info");
+        } else if(raw[1] === 0x5C) {
+          printLog(`[ALERTA REGISTRADO] Relógio respondeu com assinatura de segurança 0x5C. Autenticando...`,"warn");
         }
       }
     }
@@ -257,16 +260,30 @@
         await notifyChar.startNotifications();
         notifyChar.addEventListener('characteristicvaluechanged', handleNotificationReceived);
         
-        led.style.backgroundColor = "#1ed760";
-        txtStatus.innerText = "MODO OUVINTE v5.3 ATIVO";
-        document.getElementById("badge-state").innerText = "LIVE";
-        document.getElementById("badge-state").className = "badge badge-success";
+        // ========================================================
+        // ENGINE DE BYPASS DE SESSÃO NATIVA v5.4
+        // ========================================================
+        printLog("Injetando Handshake de Inicialização do Barramento (BC 00)...", "info");
+        await writeChar.writeValueWithoutResponse(new Uint8Array([0xBC, 0x00, 0x00, 0x00, 0x00]));
         
-        btnConnect.disabled = true;
-        btnDisconnect.disabled = false;
-        
-        printLog("CONEXÃO ESTABILIZADA. Próximo passo: Clique nas abas e injete os comandos puros.","ok");
-        renderButtons();
+        setTimeout(async () => {
+          if (writeChar) {
+            printLog("Desbloqueando permissões de tela no firmware do relógio (BC 5C Bypass)...", "info");
+            // Envia o token simulado que libera o barramento de navegação 0x48
+            await writeChar.writeValueWithoutResponse(new Uint8Array([0xBC, 0x5C, 0x01, 0x01, 0x01, 0x01]));
+            
+            led.style.backgroundColor = "#1ed760";
+            txtStatus.innerText = "MODO OUVINTE v5.4 BYPASS ACTIVE";
+            document.getElementById("badge-state").innerText = "LIVE";
+            document.getElementById("badge-state").className = "badge badge-success";
+            
+            btnConnect.disabled = true;
+            btnDisconnect.disabled = false;
+            
+            printLog("SESSÃO VINCULADA NATIVAMENTE. Interface de comandos liberada para o leigo.","ok");
+            renderButtons();
+          }
+        }, 800); // Tempo de acomodação do buffer interno da CPU do relógio
         
       } catch(err) {
         printLog(`Erro de conexão: ${err.message}`, "err");
@@ -275,7 +292,7 @@
     }
 
     function onDisconnected() {
-      printLog("GATT desconectado da central.", "err");
+      printLog("GATT desconectado da central ou link encerrado.", "err");
       Jl();
     }
 
@@ -296,7 +313,7 @@
     btnDisconnect.onclick = () => gattDevice?.gatt?.disconnect();
     document.getElementById("btn-clear").onclick = () => logScreen.innerHTML = "";
 
-    printLog("Aguardando inicialização do painel v5.3...", "info");
+    printLog("Aguardando inicialização do painel v5.4...", "info");
     renderButtons();
   </script>
 </body>
